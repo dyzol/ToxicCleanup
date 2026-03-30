@@ -2,8 +2,10 @@ package toxiccleanup.builder;
 
 import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.ToxicCleanupGameState;
+import toxiccleanup.builder.machines.MachinesManager;
 import toxiccleanup.builder.machines.Teleporter;
 import toxiccleanup.builder.player.PlayerManager;
+import toxiccleanup.builder.ui.GuiManager;
 import toxiccleanup.builder.world.WorldBuilder;
 import toxiccleanup.builder.world.WorldLoadException;
 import toxiccleanup.builder.world.ToxicWorld;
@@ -31,6 +33,8 @@ public class ToxicCleanup implements Game {
     private static final int DAMAGE_INTERVAL = 1800; // 1 HP every 30 seconds at 60 ticks/s
     private final PlayerManager playerManager; // stage 0
     private ToxicWorld world; // stage 2
+    private MachinesManager machinesManager;
+    private GuiManager guiManager;
 
 
     /**
@@ -72,6 +76,11 @@ public class ToxicCleanup implements Game {
 
         // stage 1: load world from map file
         this.world = WorldBuilder.fromFile(dimensions, "resources/wasteland.map");
+
+        this.machinesManager = new MachinesManager();
+        this.guiManager = new GuiManager();
+
+
     }
 
     /**
@@ -104,13 +113,18 @@ public class ToxicCleanup implements Game {
      * @stage4
      */
     public void tick(EngineState engine) {
-        // stage 0: create GameState and tick player
-        GameState gameState = new ToxicCleanupGameState(playerManager);
+        // stage 2: create full gamestate with world, player, machines
+        GameState gameState = new ToxicCleanupGameState(world, playerManager, machinesManager);
 
-        // Tick the player manager
+        // stage 0: create GameState and tick player
+        // GameState gameState = new ToxicCleanupGameState(playerManager);
+
+        // stage 0: tick the player manager
         playerManager.tick(engine, gameState);
 
-
+        // stage 2: tick world and gui
+        world.tick(engine, gameState);
+        guiManager.tick(engine, gameState);
     }
 
     /**
@@ -139,6 +153,9 @@ public class ToxicCleanup implements Game {
 
         // stage 0: add player on top of world
         renderables.addAll(playerManager.render());
+
+        // stage 2: guiManager
+        renderables.addAll(guiManager.render());
 
         return renderables;
     }
