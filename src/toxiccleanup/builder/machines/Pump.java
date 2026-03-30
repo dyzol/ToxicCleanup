@@ -31,10 +31,12 @@ public class Pump extends GameEntity implements Powered {
 
     public static final int COST = 5;
     private static final int POWER_REQUIREMENT = 2;
+    private static final int TOTAL_FRAMES = 10;
+
     private final TickTimer animationTimer;
     private final TickTimer pumpTimer;
     private final Adjustable target;
-    private int animationFrame = 0;
+    private int animationFrame;
 
     /**
      * Constructs a new Pump at the given position targeting the given Adjustable.
@@ -45,10 +47,14 @@ public class Pump extends GameEntity implements Powered {
      */
     public Pump(Positionable position, Adjustable pumpTarget) {
         super(position);
-        setSprite(SpriteGallery.pump.getSprite("default"));
+        // start at frame 1
+        setSprite(SpriteGallery.pump.getSprite("1"));
         this.target = pumpTarget;
+        // change every 4 ticks
         this.animationTimer = new RepeatingTimer(4);
+        // pump every 100 ticks
         this.pumpTimer = new RepeatingTimer(100);
+        this.animationFrame = 0;
     }
 
     /**
@@ -78,17 +84,10 @@ public class Pump extends GameEntity implements Powered {
         // Animation timer
         animationTimer.tick();
         if (animationTimer.isFinished()) {
-            // Cycle through animation frames
-            if (animationFrame == 0) {
-                setSprite(SpriteGallery.pump.getSprite("frame2"));
-                animationFrame = 1;
-            } else if (animationFrame == 1) {
-                setSprite(SpriteGallery.pump.getSprite("frame3"));
-                animationFrame = 2;
-            } else {
-                setSprite(SpriteGallery.pump.getSprite("default"));
-                animationFrame = 0;
-            }
+            // cycle through frames
+            animationFrame = (animationFrame + 1) % TOTAL_FRAMES;
+            String frameNumber = String.valueOf(animationFrame + 1);
+            setSprite(SpriteGallery.pump.getSprite(frameNumber));
         }
 
         // Pump timer - clean the field

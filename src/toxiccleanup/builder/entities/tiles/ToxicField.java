@@ -51,11 +51,11 @@ public class ToxicField extends Tile implements Adjustable {
             for (GameEntity entity : getStackedEntities()) {
                 entity.markForRemoval();
             }
-            updateSprite("clean");
+            updateSprite("cleanupdone");
         } else if (toxicity == 2) {
-            updateSprite("partial2");
+            updateSprite("cleanupstart");
         } else if (toxicity == 1) {
-            updateSprite("partial1");
+            updateSprite("cleanupmid");
         }
         // toxicity >= 3 keeps the default sprite
     }

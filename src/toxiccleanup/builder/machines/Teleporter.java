@@ -31,7 +31,7 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
     public static final int COST = 2;
     private static final int POWER_REQUIREMENT = 2;
     private final TickTimer animationTimer;
-    private int animationFrame = 0; //
+    private int animationFrame; //
 
     /**
      * Constructs a new Teleporter at the given position.
@@ -41,8 +41,11 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
      */
     public Teleporter(Positionable position) {
         super(position);
-        setSprite(SpriteGallery.teleporter.getSprite("default"));
+        // start at frame 1
+        setSprite(SpriteGallery.teleporter.getSprite("1"));
+        // change frame every 12 ticks
         this.animationTimer = new RepeatingTimer(12);
+        this.animationFrame = 0;
     }
 
     /**
@@ -69,14 +72,9 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
         animationTimer.tick();
         if (animationTimer.isFinished() && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
             // Cycle through animation frames
-            // Simple: toggle between frames 1 and 2
-            if (animationFrame == 0) {
-                setSprite(SpriteGallery.teleporter.getSprite("frame2"));
-                animationFrame = 1;
-            } else {
-                setSprite(SpriteGallery.teleporter.getSprite("default"));
-                animationFrame = 0;
-            }
+            animationFrame = (animationFrame + 1) % 7;
+            String frameNumber = String.valueOf(animationFrame + 1);
+            setSprite(SpriteGallery.teleporter.getSprite(frameNumber));
         }
     }
 
