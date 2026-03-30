@@ -1,6 +1,12 @@
 package toxiccleanup.builder.machines;
 
+import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.SpriteGallery;
+import toxiccleanup.builder.entities.GameEntity;
+import toxiccleanup.engine.EngineState;
+import toxiccleanup.engine.game.Positionable;
+import toxiccleanup.engine.timing.RepeatingTimer;
+import toxiccleanup.engine.timing.TickTimer;
 
 /**
  * A {@link Pump} is a machine that removes toxicity from a {toxiccleanup.builder.entities.tiles.ToxicField}
@@ -21,6 +27,74 @@ import toxiccleanup.builder.SpriteGallery;
  * @provided
  * @stage3
  */
-public class Pump {
+public class Pump extends GameEntity implements Powered {
 
+    public static final int COST = 5;
+    private static final int POWER_REQUIREMENT = 2;
+    private final TickTimer animationTimer;
+    private final TickTimer pumpTimer;
+    private final Adjustable target;
+    private int animationFrame = 0;
+
+    /**
+     * Constructs a new Pump at the given position targeting the given Adjustable.
+     *
+     * @param position the position to place the pump
+     * @param pumpTarget the Adjustable (ToxicField) to clean
+     * @stage3
+     */
+    public Pump(Positionable position, Adjustable pumpTarget) {
+        super(position);
+        setSprite(SpriteGallery.pump.getSprite("default"));
+        this.target = pumpTarget;
+        this.animationTimer = new RepeatingTimer(4);
+        this.pumpTimer = new RepeatingTimer(100);
+    }
+
+    /**
+     * Returns the minimum power required for this pump to operate.
+     *
+     * @return 2
+     * @stage3
+     */
+    @Override
+    public int getPowerRequirement() {
+        return POWER_REQUIREMENT;
+    }
+
+    /**
+     * Called every tick. Advances animation and pump timers when powered.
+     *
+     * @param state the engine state
+     * @param game the game state
+     * @stage3
+     */
+    @Override
+    public void tick(EngineState state, GameState game) {
+        if (!game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
+            return;  // Not enough power, do nothing
+        }
+
+        // Animation timer
+        animationTimer.tick();
+        if (animationTimer.isFinished()) {
+            // Cycle through animation frames
+            if (animationFrame == 0) {
+                setSprite(SpriteGallery.pump.getSprite("frame2"));
+                animationFrame = 1;
+            } else if (animationFrame == 1) {
+                setSprite(SpriteGallery.pump.getSprite("frame3"));
+                animationFrame = 2;
+            } else {
+                setSprite(SpriteGallery.pump.getSprite("default"));
+                animationFrame = 0;
+            }
+        }
+
+        // Pump timer - clean the field
+        pumpTimer.tick();
+        if (pumpTimer.isFinished()) {
+            target.adjust(1);  // Reduce toxicity by 1
+        }
+    }
 }

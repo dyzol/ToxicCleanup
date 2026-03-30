@@ -1,6 +1,13 @@
 package toxiccleanup.builder.machines;
 
+import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.SpriteGallery;
+import toxiccleanup.builder.entities.GameEntity;
+import toxiccleanup.builder.entities.PlayerOverHook;
+import toxiccleanup.engine.EngineState;
+import toxiccleanup.engine.game.Positionable;
+import toxiccleanup.engine.timing.RepeatingTimer;
+import toxiccleanup.engine.timing.TickTimer;
 
 /**
  * A {@link Teleporter} is a machine that allows the player to instantly travel between teleporter
@@ -19,6 +26,73 @@ import toxiccleanup.builder.SpriteGallery;
  * @provided
  * @stage3
  */
-public class Teleporter {
+public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
 
+    public static final int COST = 2;
+    private static final int POWER_REQUIREMENT = 2;
+    private final TickTimer animationTimer;
+    private int animationFrame = 0; //
+
+    /**
+     * Constructs a new Teleporter at the given position.
+     *
+     * @param position the position to place the teleporter
+     * @stage3
+     */
+    public Teleporter(Positionable position) {
+        super(position);
+        setSprite(SpriteGallery.teleporter.getSprite("default"));
+        this.animationTimer = new RepeatingTimer(12);
+    }
+
+    /**
+     * Returns the minimum power required for this teleporter to operate.
+     *
+     * @return 2
+     * @stage3
+     */
+    @Override
+    public int getPowerRequirement() {
+        return POWER_REQUIREMENT;
+    }
+
+    /**
+     * Called every tick. Advances the animation timer and updates the sprite
+     * when the timer fires and power is sufficient.
+     *
+     * @param engine the engine state
+     * @param game the game state
+     * @stage3
+     */
+    @Override
+    public void tick(EngineState engine, GameState game) {
+        animationTimer.tick();
+        if (animationTimer.isFinished() && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
+            // Cycle through animation frames
+            // Simple: toggle between frames 1 and 2
+            if (animationFrame == 0) {
+                setSprite(SpriteGallery.teleporter.getSprite("frame2"));
+                animationFrame = 1;
+            } else {
+                setSprite(SpriteGallery.teleporter.getSprite("default"));
+                animationFrame = 0;
+            }
+        }
+    }
+
+    /**
+     * Called when the player stands on this teleporter. If 'e' is pressed and
+     * sufficient power is available, teleports the player to another teleporter.
+     *
+     * @param state the engine state
+     * @param game the game state
+     * @stage3
+     */
+    @Override
+    public void playerOver(EngineState state, GameState game) {
+        if (state.getKeys().isDown('e') && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
+            Positionable newPosition = game.getMachines().getNextTeleporterPosition(getPosition());
+            game.getPlayer().setPosition(newPosition);
+        }
+    }
 }

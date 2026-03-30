@@ -1,6 +1,7 @@
 package toxiccleanup.builder.player;
 
 import toxiccleanup.builder.GameState;
+import toxiccleanup.builder.entities.tiles.Tile;
 import toxiccleanup.engine.EngineState;
 import toxiccleanup.engine.game.Direction;
 import toxiccleanup.engine.game.Position;
@@ -32,7 +33,7 @@ import java.util.List;
  */
 public class PlayerManager implements Player {
     private static final int MAX_HP = 10;
-    private static final int SPEED = 10; // originally 1, change this back after testing
+    private static final int SPEED = 2; // originally 1, change this back after testing
     private final Cleaner player;
     //used to track if players recently moved
     private final TickTimer movementTimer = new RepeatingTimer(10);
@@ -107,22 +108,32 @@ public class PlayerManager implements Player {
         if (!isAlive()) {
             return;
         }
+        // After moving, before tile interactions
+        System.out.println("Player position: (" + player.getX() + ", " + player.getY() + ")");
+        int tileSize = state.getDimensions().tileSize();
+        System.out.println("Tile coordinate: (" + (player.getX() / tileSize) + ", " + (player.getY() / tileSize) + ")");
 
-        // Priority order: w > s > a > d
-        if (state.getKeys().isDown('w')) {
-            player.move(Direction.NORTH, SPEED);
-        } else if (state.getKeys().isDown('s')) {
-            player.move(Direction.SOUTH, SPEED);
-        } else if (state.getKeys().isDown('a')) {
-            player.move(Direction.WEST, SPEED);
-        } else if (state.getKeys().isDown('d')) {
-            player.move(Direction.EAST, SPEED);
+        movementTimer.tick();
+
+        // Only move when timer is finished (cooldown is over)
+        if (movementTimer.isFinished()) {
+            // Priority order: w > s > a > d
+            if (state.getKeys().isDown('w')) {
+                player.move(Direction.NORTH, tileSize);
+                // Timer resets automatically (RepeatingTimer resets after isFinished)
+            } else if (state.getKeys().isDown('s')) {
+                player.move(Direction.SOUTH, tileSize);
+            } else if (state.getKeys().isDown('a')) {
+                player.move(Direction.WEST, tileSize);
+            } else if (state.getKeys().isDown('d')) {
+                player.move(Direction.EAST, tileSize);
+            }
         }
+
         // find boundary limits (half-tile offset)
         // get window dimensions from state
         int windowWidth = state.getDimensions().windowSize();
         int windowHeight = state.getDimensions().windowSize();
-        int tileSize = state.getDimensions().tileSize();
 
         // half a tile before edge to prevent half the player get offscreen
         int minX = tileSize / 2;
@@ -137,6 +148,15 @@ public class PlayerManager implements Player {
         if (newX > maxX) player.setX(maxX);
         if (newY < minY) player.setY(minY);
         if (newY > maxY) player.setY(maxY);
+
+        // Stage 3: Process tile interactions AFTER movement
+        // Get tiles at player's position and call playerOver on each
+        List<Tile> tiles = game.getWorld().tilesAtPosition(getPosition(), state.getDimensions());
+        System.out.println("Tiles under player: " + tiles.size());  // DEBUG
+        for (Tile tile : tiles) {
+            System.out.println("Tile type: " + tile.getClass().getSimpleName());  // DEBUG
+            tile.playerOver(state, game);
+        }
     }
 
     /**

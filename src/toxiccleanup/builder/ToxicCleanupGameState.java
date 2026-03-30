@@ -21,7 +21,9 @@ public class ToxicCleanupGameState implements GameState {
     private final Machines machines;
 
     /**
-     * Constructs a new ToxicCleanupGameState wrapping only the player manager. Use this constructor when only player-related state is needed and world or machine access is not required.
+     * Constructs a new ToxicCleanupGameState wrapping only the player manager.
+     * Use this constructor when only player-related state is needed and world or machine
+     * access is not required.
      * @param player - the player manager, used to query position, HP, and move the player.
      */
     public ToxicCleanupGameState(PlayerManager player) {
@@ -44,7 +46,8 @@ public class ToxicCleanupGameState implements GameState {
 
     /**
      * Returns the current state of the game world.
-     * The returned world is mutable, that is, calling mutator methods such as World.place(Tile) will modify the world.
+     * The returned world is mutable, that is, calling mutator methods such as World.place(Tile)
+     * will modify the world.
      * Specified by:
      * getWorld in interface GameState
      * Returns:

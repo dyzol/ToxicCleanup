@@ -4,6 +4,7 @@ import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.entities.GameEntity; // added for adjust() when removing stacked ents
 import toxiccleanup.builder.SpriteGallery;
 import toxiccleanup.builder.machines.Adjustable;
+import toxiccleanup.builder.machines.Pump;
 import toxiccleanup.engine.EngineState;
 import toxiccleanup.engine.game.Positionable;
 
@@ -67,5 +68,28 @@ public class ToxicField extends Tile implements Adjustable {
      */
     public boolean isToxic() {
         return toxicity > 0;
+    }
+
+    /**
+     * Handles player interaction while on this tile.
+     * - Left click: build a Pump (if toxic and no stacked entities)
+     *
+     * @param state the engine state
+     * @param game the game state
+     * @stage3
+     */
+    @Override
+    public void playerOver(EngineState state, GameState game) {
+        super.playerOver(state, game);
+
+        // Check if field is toxic and empty
+        boolean isEmpty = getStackedEntities().isEmpty();
+
+        if (isToxic() && isEmpty && state.getMouse().isLeftPressed()) {
+            Pump pump = game.getMachines().spawnPump(getPosition(), this);
+            if (pump != null) {
+                placeOn(pump);
+            }
+        }
     }
 }

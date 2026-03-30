@@ -6,6 +6,7 @@ import toxiccleanup.engine.util.RandomNumberGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Manages the power system and machine spawning for the game.
@@ -104,9 +105,32 @@ public class MachinesManager implements Machines {
      */
     @Override
     public Positionable getNextTeleporterPosition(Positionable excludedPosition) {
-        // Stage 2: Return the excluded position (no random selection yet)
+
         // Stage 3: Implement full random selection
-        return excludedPosition;
+        if (teleporterPositions.isEmpty()) {
+            return excludedPosition;
+        }
+        if (teleporterPositions.size() == 1) {
+            return teleporterPositions.get(0);
+        }
+
+        // Filter out the excluded position
+        List<Positionable> candidates = new ArrayList<>();
+        for (Positionable pos : teleporterPositions) {
+            if (pos.getX() != excludedPosition.getX() || pos.getY() != excludedPosition.getY()) {
+                candidates.add(pos);
+            }
+        }
+
+        // If only the excluded position exists, return it
+        if (candidates.isEmpty()) {
+            return excludedPosition;
+        }
+
+        // Return a random candidate
+        Random random = new Random();
+        int randomIndex = random.nextInt(candidates.size());
+        return candidates.get(randomIndex);
     }
 
     /**
@@ -118,9 +142,12 @@ public class MachinesManager implements Machines {
      */
     @Override
     public SolarPanel spawnSolarPanel(Positionable position) {
-        // Stage 2: Return null
         // Stage 3: Implement spawning logic
-        return null;
+        if (hasRequiredPower(SolarPanel.COST)) {
+            adjust(-SolarPanel.COST);
+            return new SolarPanel(position);
+        }
+        return null; // Stage 2: Return null
     }
 
     /**
@@ -132,8 +159,12 @@ public class MachinesManager implements Machines {
      */
     @Override
     public Teleporter spawnTeleporter(Positionable position) {
-        // Stage 2: Return null
-        // Stage 3: Implement spawning logic
+        if (hasRequiredPower(Teleporter.COST)) {
+            adjust(-Teleporter.COST);
+            Teleporter teleporter = new Teleporter(position);
+            teleporterPositions.add(position);
+            return teleporter;
+        }
         return null;
     }
 
@@ -147,8 +178,10 @@ public class MachinesManager implements Machines {
      */
     @Override
     public Pump spawnPump(Positionable position, Adjustable adjustable) {
-        // Stage 2: Return null
-        // Stage 3: Implement spawning logic
+        if (hasRequiredPower(Pump.COST)) {
+            adjust(-Pump.COST);
+            return new Pump(position, adjustable);
+        }
         return null;
     }
 }

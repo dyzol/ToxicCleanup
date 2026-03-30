@@ -49,8 +49,8 @@ public class WorldBuilder {
 
             for (int col = 0; col < line.length(); col++) {
                 char symbol = line.charAt(col);
-                int x = col * tileSize + tileSize / 2;
-                int y = row * tileSize + tileSize / 2;
+                int x = col * dimensions.tileSize() + dimensions.tileSize() / 2;
+                int y = row * dimensions.tileSize() + dimensions.tileSize() / 2;
                 Position position = new Position(x, y);
 
                 try {
@@ -92,8 +92,8 @@ public class WorldBuilder {
     public static ToxicWorld fromTiles(List<Tile> tiles) {
         ToxicWorld world = new ToxicWorld();
         // Add in reverse order so no test depends on insertion order
-        for (int i = tiles.size() - 1; i >= 0; i--) {
-            world.place(tiles.get(i));
+        for (Tile tile : tiles) {
+            world.place(tile);
         }
         return world;
     }

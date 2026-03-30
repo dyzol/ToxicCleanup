@@ -116,9 +116,6 @@ public class ToxicCleanup implements Game {
         // stage 2: create full gamestate with world, player, machines
         GameState gameState = new ToxicCleanupGameState(world, playerManager, machinesManager);
 
-        // stage 0: create GameState and tick player
-        // GameState gameState = new ToxicCleanupGameState(playerManager);
-
         // stage 0: tick the player manager
         playerManager.tick(engine, gameState);
 
