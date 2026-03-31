@@ -109,9 +109,7 @@ public class PlayerManager implements Player {
             return;
         }
         // After moving, before tile interactions
-        System.out.println("Player position: (" + player.getX() + ", " + player.getY() + ")");
         int tileSize = state.getDimensions().tileSize();
-        System.out.println("Tile coordinate: (" + (player.getX() / tileSize) + ", " + (player.getY() / tileSize) + ")");
 
         movementTimer.tick();
 
@@ -152,9 +150,7 @@ public class PlayerManager implements Player {
         // Stage 3: Process tile interactions AFTER movement
         // Get tiles at player's position and call playerOver on each
         List<Tile> tiles = game.getWorld().tilesAtPosition(getPosition(), state.getDimensions());
-        System.out.println("Tiles under player: " + tiles.size());  // DEBUG
         for (Tile tile : tiles) {
-            System.out.println("Tile type: " + tile.getClass().getSimpleName());  // DEBUG
             tile.playerOver(state, game);
         }
     }
@@ -251,5 +247,10 @@ public class PlayerManager implements Player {
     public void adjust(int amount) {
         hp -= amount;
         hp = Math.clamp(hp, 0, MAX_HP);
+
+        // Show dead sprite when HP reaches 0
+        if (hp == 0) {
+            player.setDeadSprite();
+        }
     }
 }

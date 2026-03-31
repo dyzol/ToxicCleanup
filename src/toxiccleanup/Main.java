@@ -28,8 +28,9 @@ public class Main {
      */
     public static void main(String[] args) throws IOException, WorldLoadException {
         final Dimensions dimensions = new TileGrid(TILES_PER_ROW, SIZE);
+        int x = dimensions.tileSize() * 13 + dimensions.tileSize() / 2;
         final Game game = new ToxicCleanup(dimensions,
-                new Position(dimensions.tileSize() * 13, dimensions.tileSize() * 13));
+                new Position(x, x)); // reuse x since its same in y
         final Engine engine = new Engine(game, dimensions);
 
         // Optionally uncomment this line to turn on debug mode

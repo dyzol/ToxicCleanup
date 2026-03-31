@@ -2,6 +2,8 @@ package toxiccleanup.builder;
 
 import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.ToxicCleanupGameState;
+import toxiccleanup.builder.entities.tiles.Dirt;
+import toxiccleanup.builder.entities.tiles.Tile; // for stage 4
 import toxiccleanup.builder.machines.MachinesManager;
 import toxiccleanup.builder.machines.Teleporter;
 import toxiccleanup.builder.player.PlayerManager;
@@ -31,11 +33,16 @@ import java.util.List;
  */
 public class ToxicCleanup implements Game {
     private static final int DAMAGE_INTERVAL = 1800; // 1 HP every 30 seconds at 60 ticks/s
+    private static final int TICKS_PER_SECOND = 60;
+    private static final int GAME_DURATION_TICKS = 18000; // 5 minutes at 60 ticks/sec
+
     private final PlayerManager playerManager; // stage 0
     private ToxicWorld world; // stage 2
     private MachinesManager machinesManager;
     private GuiManager guiManager;
 
+    private int damageTimer;  // Countdown for periodic damage
+    private boolean gameOver;  // Prevent further updates after win/loss
 
     /**
      * Constructs an instance of {@link ToxicCleanup} using default settings
@@ -77,10 +84,30 @@ public class ToxicCleanup implements Game {
         // stage 1: load world from map file
         this.world = WorldBuilder.fromFile(dimensions, "resources/wasteland.map");
 
+        // stage 2: initialise machines manager and GUI manager
         this.machinesManager = new MachinesManager();
         this.guiManager = new GuiManager();
 
+        // stage 4: initialise damage timer and game over flag
+        this.damageTimer = 0;
+        this.gameOver = false;
 
+        // Stage 4: Spawn starter teleporter at the given position
+        Teleporter starterTeleporter = machinesManager.spawnTeleporter(starterTeleporterPosition);
+        if (starterTeleporter != null) {
+            // Find the tile at that position and place the teleporter on it
+            List<Tile> tiles = world.tilesAtPosition(starterTeleporterPosition, dimensions);
+            for (Tile tile : tiles) {
+                // If it's dirt, pave it first
+                if (tile instanceof Dirt) {
+                    Dirt dirtTile = (Dirt) tile;
+                    if (!dirtTile.isPaved()) {
+                        dirtTile.pave();
+                    }
+                }
+                tile.placeOn(starterTeleporter);
+            }
+        }
     }
 
     /**
@@ -113,6 +140,11 @@ public class ToxicCleanup implements Game {
      * @stage4
      */
     public void tick(EngineState engine) {
+        // If game is over, don't process any more ticks
+        if (gameOver) {
+            return;
+        }
+
         // stage 2: create full gamestate with world, player, machines
         GameState gameState = new ToxicCleanupGameState(world, playerManager, machinesManager);
 
@@ -122,6 +154,71 @@ public class ToxicCleanup implements Game {
         // stage 2: tick world and gui
         world.tick(engine, gameState);
         guiManager.tick(engine, gameState);
+
+        checkWinLoseConditions(engine, gameState);
+
+        // Stage 4: Apply periodic damage if game is still ongoing
+        if (!gameOver) {
+            applyPeriodicDamage(engine, gameState);
+        }
+    }
+
+    /**
+     * Checks win/lose conditions and displays appropriate messages.
+     *
+     * @param engine the engine state
+     * @param game the game state
+     * @stage4
+     */
+    private void checkWinLoseConditions(EngineState engine, GameState game) {
+        // Lose condition: player HP <= 0
+        if (!playerManager.isAlive()) {
+            gameOver = true;
+            guiManager.lose(engine);
+            return;
+        }
+
+        // Win condition: no toxic fields remain
+        if (!world.isToxic()) {
+            gameOver = true;
+            guiManager.win(engine);
+        }
+        // Stage 4: Lose condition - time runs out
+        int currentTick = engine.currentTick();
+        int ticksRemaining = GAME_DURATION_TICKS - currentTick;
+        if (ticksRemaining <= 0) {
+            gameOver = true;
+            guiManager.lose(engine);
+        }
+    }
+
+    /**
+     * Applies periodic damage to the player every DAMAGE_INTERVAL ticks
+     * if any toxic fields still exist.
+     *
+     * @param engine the engine state
+     * @param game the game state
+     * @stage4
+     */
+    private void applyPeriodicDamage(EngineState engine, GameState game) {
+        // no need to damage if game is over
+        if (gameOver) {
+            return;
+        }
+
+        // Only apply damage if there are toxic fields
+        if (world.isToxic()) {
+            damageTimer++;
+
+            if (damageTimer >= DAMAGE_INTERVAL) {
+                // Deal 1 damage to player
+                playerManager.adjust(1);
+                damageTimer = 0;  // Reset timer
+            }
+        } else {
+            // No toxic fields, reset timer
+            damageTimer = 0;
+        }
     }
 
     /**
