@@ -81,7 +81,6 @@ public class Cleaner extends GameEntity {
                 setSprite(art.getSprite("left"));
             }
             default -> setSprite(art.getSprite("down"));
-
         }
     }
 
@@ -101,12 +100,13 @@ public class Cleaner extends GameEntity {
      * This method is required for interface compliance and does not need to be implemented.
      * The body should remain empty.
      *
-     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard information and
+     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard
+     *              information and
      *              dimension. Useful for processing keyboard presses or mouse movement.
      * @param game  The state of the game, included for interface compliance; not needed here.
      */
     @Override
     public void tick(EngineState state, GameState game) {
-
+        // all behaviour is handled by PlayerManager calling move() directly
     }
 }

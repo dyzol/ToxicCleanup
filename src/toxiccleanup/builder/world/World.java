@@ -10,18 +10,19 @@ import java.util.List;
  * An interface to query and modify the state of the world.
  *
  * <p>A world consists of a grid of tiles. The tiles at a given position can be queried via
- * {@link #tilesAtPosition(Positionable, Dimensions)}. New tiles can be placed on the world (at the
- * position contained within the tile instance) using {@link #place(Tile)}.
+ * {tilesAtPosition(Positionable, Dimensions)}. New tiles can be placed on the world (at
+ * position contained within the tile instance) using {place(Tile)}.
  *
  * @provided
  */
 public interface World {
 
     /**
-     * Returns all tiles whose grid cell matches the tile index containing the given pixel position.
+     * Returns all tiles whose grid cell matches the tile index containing given pixel position
      *
-     * <p>A tile is at a matching position if its x and y position occupy the same tile index as the given x
-     * and y position (according to {@link Dimensions#pixelToTile(int)}).
+     * <p>A tile is at a matching position if its x and y position occupy the same tile index as
+     * the given x
+     * and y position (according to {@link Dimensions pixelToTile(int)}).
      *
      * <p>The order of the tiles is unspecified.
      *
@@ -34,7 +35,8 @@ public interface World {
     /**
      * Return all tiles in the world.
      *
-     * <p>Modifying the returned list must not modify the state of the world (although modifying the
+     * <p>Modifying the returned list must not modify the state of the world (although modifying
+     * the
      * tiles within the list will).
      *
      * <p>The order of the tiles is unspecified, any ordering is suitable.
@@ -46,11 +48,12 @@ public interface World {
     /**
      * Place a new tile into the world.
      *
-     * <p>The tile will be placed at the position specified by its {@link Tile#getX()} and {@link
-     * Tile#getY()} position.
+     * <p>The tile will be placed at the position specified by its {Tile getX()} and {
+     * Tile getY()} position.
      *
      * @param tile The tile to place into the world.
-     * @ensures Any calls to {@link #tilesAtPosition} will reflect the existence of this new tile in
+     * @ensures Any calls to {tilesAtPosition} will reflect the existence of this new tile
+     * in
      * the world.
      */
     void place(Tile tile);

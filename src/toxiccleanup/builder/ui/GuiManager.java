@@ -13,6 +13,17 @@ import java.util.List;
 
 /**
  * Manages all HUD (heads-up display) elements shown during gameplay.
+ * Each tick, the GuiManager rebuilds the following elements:
+ * Power icon: a lightning-bolt icon in the top-left corner.
+ * Power bar: a vertical column of PowerBar segments below the power icon, showing how much
+ * of the maximum power (14) is currently available; filled segments represent available power,
+ * empty segments represent spent power.
+ * Hearts: a vertical column of Heart icons in the top-right corner, one per remaining HP point.
+ * Countdown timer: a text display at the bottom-left showing the remaining game time in
+ * minutes and seconds.
+ * When the game ends, win(toxiccleanup.engine.EngineState) or
+ * lose(toxiccleanup.engine.EngineState) is called to overlay a win/lose message
+ * Once set, this message persists until the game restarts.
  *
  * @stage2
  */
@@ -85,12 +96,12 @@ public class GuiManager implements Overlay {
         int secondsRemaining = Math.max(0, ticksRemaining / TICKS_PER_SECOND);
         int minutes = secondsRemaining / 60;
         int seconds = secondsRemaining % 60;
-        String timeText = String.format("%d:%02d", minutes, seconds);
+        String timeText = String.format("%d %02d", minutes, seconds);
 
         // timer text
         int timerX = tileSize / 2;
         int timerY = windowSize - tileSize / 2;
-        renderables.addAll(createTextRenderables(timeText, timerX, timerY, CHAR_WIDTH));
+        renderables.addAll(createTextRenderables(timeText, timerX, timerY));
 
         this.currentRenderables = renderables;
     }
@@ -108,7 +119,7 @@ public class GuiManager implements Overlay {
         int totalWidth = message.length() * CHAR_WIDTH;
         int x = (windowSize - totalWidth) / 2;
         int y = windowSize / 2;
-        messageRenderables = createTextRenderables(message, x, y, CHAR_WIDTH);
+        messageRenderables = createTextRenderables(message, x, y);
     }
 
     /**
@@ -123,7 +134,7 @@ public class GuiManager implements Overlay {
         String message = "GAME OVER";
         int x = (windowSize - (message.length() * CHAR_WIDTH)) / 2;
         int y = windowSize / 2;
-        messageRenderables = createTextRenderables(message, x, y, CHAR_WIDTH);
+        messageRenderables = createTextRenderables(message, x, y);
     }
 
     /**
@@ -134,28 +145,34 @@ public class GuiManager implements Overlay {
      */
     @Override
     public List<Renderable> render() {
+
+        // always see normal HUD (hearts, power bars, timer)
+        List<Renderable> allRenderables = new ArrayList<>(currentRenderables);
+
+        // if game ended, add the win/lose message on top
         if (gameEnded) {
-            return new ArrayList<>(messageRenderables);
+            allRenderables.addAll(messageRenderables);
         }
-        return new ArrayList<>(currentRenderables);
+
+        return allRenderables;
     }
 
     /**
      * Creates renderables for each character in a text string.
      */
-    private List<Renderable> createTextRenderables(String text, int startX, int startY, int charWidth) {
+    private List<Renderable> createTextRenderables(String text, int startX, int startY) {
         List<Renderable> renderables = new ArrayList<>();
-        int xOffset = 0;
+        int offset = 0;
 
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             String spriteName = getSpriteName(c);
 
-            int x = startX + xOffset;
+            int x = startX + offset;
 
             TextChar character = new TextChar(new Position(x, startY), spriteName);
             renderables.add(character);
-            xOffset += charWidth;
+            offset += CHAR_WIDTH;
         }
 
         return renderables;

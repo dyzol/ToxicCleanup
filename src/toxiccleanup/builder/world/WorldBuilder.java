@@ -13,6 +13,9 @@ import java.util.List;
 
 /**
  * Loads an instance of a world from a string or file representation.
+ * Each line of the file, separated by new line characters, corresponds
+ * to a row of tiles in the world. Each character represents a tile according
+ * to TileFactory.fromSymbol(toxiccleanup.engine.game.Positionable, char).
  *
  * @stage1
  */
@@ -27,28 +30,37 @@ public class WorldBuilder {
      * @throws WorldLoadException if the encoding is invalid
      * @stage1
      */
-    public static List<Tile> fromString(Dimensions dimensions, String text) throws WorldLoadException {
+    public static List<Tile> fromString(Dimensions dimensions, String text)
+            throws WorldLoadException {
+        // split text into an array of lines
         String[] lines = text.split("\\r?\\n");
+
+        // calculate expected map size
         int tileSize = dimensions.tileSize();
         int expectedSize = dimensions.windowSize() / tileSize;
 
-        // Check number of rows
+        // validate number of rows
         if (lines.length != expectedSize) {
-            throw new WorldLoadException("Expected " + expectedSize + " rows, got " + lines.length);
+            throw new WorldLoadException("Expected " + expectedSize + " rows, got "
+                    + lines.length);
         }
 
+        // set up an array of tiles
         List<Tile> tiles = new ArrayList<>();
 
         for (int row = 0; row < lines.length; row++) {
             String line = lines[row];
 
-            // Check row length
+            // validate row length
             if (line.length() != expectedSize) {
                 throw new WorldLoadException("Row " + row + " has incorrect length", row);
             }
 
+            // process each char in the row
             for (int col = 0; col < line.length(); col++) {
                 char symbol = line.charAt(col);
+
+                // convert char to pixel position
                 int x = col * dimensions.tileSize() + dimensions.tileSize() / 2;
                 int y = row * dimensions.tileSize() + dimensions.tileSize() / 2;
                 Position position = new Position(x, y);

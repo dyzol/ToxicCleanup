@@ -8,8 +8,9 @@ import toxiccleanup.engine.game.Position;
 import toxiccleanup.engine.game.Positionable;
 
 /**
- * The base class for all game objects in {@link toxiccleanup.builder.ToxicCleanup}. {@link GameEntity}
- * extends the toxiccleanup.engine's {@link Entity} (which provides x/y position and sprite rendering) and
+ * The base class for all game objects in {@link toxiccleanup.builder.ToxicCleanup}. {GameEntity}
+ * extends the toxiccleanup.engine's {@link Entity} (which provides x/y position and
+ * sprite rendering) and
  * additionally implements {@link Tickable} (so it is updated each game frame) and
  * {@link Positionable} (so its position can be retrieved as a {@link Position}).
  *
@@ -49,11 +50,14 @@ public class GameEntity extends Entity implements Tickable, Positionable {
 
     /**
      * Called once per game frame to advance this entity's state. The default implementation
-     * delegates to the toxiccleanup.engine's base {@link Entity#tick(EngineState)} to handle any internal
-     * toxiccleanup.engine bookkeeping (e.g. sprite animation). Subclasses should call {@code super.tick(state)}
+     * delegates to the toxiccleanup.engine's base {@link Entity#tick(EngineState)} to handle any
+     * internal
+     * toxiccleanup.engine bookkeeping (e.g. sprite animation). Subclasses should call
+     * {@code super.tick(state)}
      * and then add their own per-frame logic.
      *
-     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard information and
+     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard information
+     *              and
      *              dimension. Useful for processing keyboard presses or mouse movement.
      * @param game  The state of the game, including the player and world. Can be used to query or
      *              update the game state.

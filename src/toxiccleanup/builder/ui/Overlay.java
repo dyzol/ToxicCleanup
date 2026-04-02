@@ -4,7 +4,8 @@ import toxiccleanup.builder.Tickable;
 
 /**
  * A screen-space HUD overlay that is both renderable and tickable. An {@link Overlay} combines
- * {@link RenderableGroup} (providing a list of {@link toxiccleanup.engine.renderer.Renderable}s to draw each
+ * {@link RenderableGroup} (providing a list of {@link toxiccleanup.engine.renderer.Renderable}s
+ * to draw each
  * frame) with {@link Tickable} (allowing the overlay to update its contents based on the current
  * game state each tick).
  *

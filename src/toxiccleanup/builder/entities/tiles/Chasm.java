@@ -44,6 +44,7 @@ public class Chasm extends Tile {
     /**
      * Called each tick the player occupies this tile.
      * If fallable, deals 1 damage to the player.
+     * Overrides Tile.playerOver
      *
      * @param engine the engine state
      * @param game the game state

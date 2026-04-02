@@ -20,7 +20,7 @@ public interface Machines extends Adjustable {
     void adjust(int amount);
 
     /**
-     * Sets the current power level to the given value, clamped to [0, {@link #getMaxPower()}].
+     * Sets the current power level to the given value, clamped to [0, {getMaxPower()}].
      * Values below 0 are clamped to 0; values above the maximum are clamped to the maximum.
      *
      * @param value the power level to set.
@@ -47,14 +47,15 @@ public interface Machines extends Adjustable {
      * or perform their action this tick.
      *
      * @param powerRequirement the minimum number of power units needed.
-     * @return {@code true} if current power &ge; {@code powerRequirement}; {@code false} otherwise.
+     * @return {@code true} if current power &ge; {@code powerRequirement}; {@code false} otherwise
      */
     boolean hasRequiredPower(int powerRequirement);
 
     /**
      * Attempts to create a {@link SolarPanel} at the given location and return it.
      * Should only create if there is enough power to pay the {@link SolarPanel} COST (3).
-     * If the current power is at least 3, this method deducts 3 power and returns the new SolarPanel.
+     * If the current power is at least 3, this method deducts 3 power and returns the new
+     * SolarPanel
      * Otherwise, this method returns null.
      *
      * @param position the position we wish to spawn the {@link SolarPanel} at.

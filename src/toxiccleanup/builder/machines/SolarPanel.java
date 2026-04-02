@@ -9,8 +9,10 @@ import toxiccleanup.engine.timing.RepeatingTimer;
 import toxiccleanup.engine.timing.TickTimer;
 
 /**
- * A {@link SolarPanel} is a machine that passively generates power for the game's shared power
- * system. Once placed on a paved {toxiccleanup.builder.entities.tiles.Dirt} tile, it increments the
+ * A {@link SolarPanel} is a machine that passively generates power for the
+ * game's shared power
+ * system. Once placed on a paved {toxiccleanup.builder.entities.tiles.Dirt} tile,
+ * it increments the
  * power in the {MachinesManager} by 1 every 120 game ticks (approximately every 2 seconds
  * at 60 ticks per second). Power is capped at the machine manager's maximum (14 by default).
  *
@@ -39,11 +41,14 @@ public class SolarPanel extends GameEntity {
     }
 
     /**
-     * Called every tick. When the generation timer fires, adds 1 power
-     * to the machine system.
+     * Called every game tick to advance the solar panel's internal timer.
+     * When the timer fires (every 120 ticks), adds 1 power to
+     * the shared machine power system via Machines.adjust(int).
      *
-     * @param state the engine state
-     * @param game the game state
+     * @param state The state of the toxiccleanup.engine, including the mouse,
+     *              keyboard information and dimension.
+     *              Useful for processing keyboard presses or mouse movement.
+     * @param game  state of the game, providing access to the machine power system
      * @stage3
      */
     @Override

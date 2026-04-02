@@ -1,15 +1,18 @@
 package toxiccleanup.builder.machines;
 
-import toxiccleanup.builder.entities.tiles.Tile;
 import toxiccleanup.engine.game.Positionable;
 import toxiccleanup.engine.util.RandomNumberGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
- * Manages the power system and machine spawning for the game.
+ * Tracks the power level (starts and capped at 14)
+ * Spending power when machine is built; SolarPanel Teleporter and Pump have their fixed cost
+ * Constructing and returning new machine instances when there is sufficient power,
+ * or returning null if the power cost cannot be met.
+ * Tracking all teleporter positions so that the Teleporter can retrieve
+ * a destination when the player activates one.
  *
  * @stage2
  * @stage3
@@ -32,7 +35,7 @@ public class MachinesManager implements Machines {
     /**
      * Constructs a new MachinesManager with the given starting power.
      *
-     * @param power the starting power level
+     * @param power the starting power level, between 0 and 14 inclusive
      * @stage2
      */
     public MachinesManager(int power) {
@@ -41,7 +44,7 @@ public class MachinesManager implements Machines {
     }
 
     /**
-     * Returns whether the current power level is sufficient.
+     * Returns whether the current power level is sufficient for a machine's operation
      *
      * @param powerRequirement the minimum power needed
      * @return true if current power >= powerRequirement
@@ -66,7 +69,7 @@ public class MachinesManager implements Machines {
     /**
      * Sets the power level, clamped to [0, MAX_POWER].
      *
-     * @param value the new power level
+     * @param value the new power level to set
      * @stage2
      */
     @Override
@@ -97,24 +100,28 @@ public class MachinesManager implements Machines {
     }
 
     /**
-     * Returns the position of a random teleporter other than the excluded one.
+     * Returns the position of a random teleporter other than the excluded one,
+     * chosen at random from registered teleporter locations. Used by Teleporter to determine
+     * where to send the player.
+     * If only one teleporter, its own position is returned
      *
      * @param excludedPosition the teleporter position to exclude
      * @return a random teleporter position
+     * @stage2
      * @stage3
      */
     @Override
     public Positionable getNextTeleporterPosition(Positionable excludedPosition) {
 
-        // Stage 3: Implement full random selection
+        // just one teleporter, so teleport to itself
         if (teleporterPositions.isEmpty()) {
             return excludedPosition;
         }
         if (teleporterPositions.size() == 1) {
-            return teleporterPositions.get(0);
+            return teleporterPositions.getFirst();
         }
 
-        // Filter out the excluded position
+        // list of candidate teleporters (excludes latest teleporter: excludedPosition)
         List<Positionable> candidates = new ArrayList<>();
         for (Positionable pos : teleporterPositions) {
             if (pos.getX() != excludedPosition.getX() || pos.getY() != excludedPosition.getY()) {
@@ -128,33 +135,44 @@ public class MachinesManager implements Machines {
         }
 
         // Return a random candidate
-        Random random = new Random();
-        int randomIndex = random.nextInt(candidates.size());
+        RandomNumberGenerator num = new RandomNumberGenerator();
+        int randomIndex = num.nextInt(candidates.size());
         return candidates.get(randomIndex);
     }
 
     /**
      * Attempts to spawn a SolarPanel at the given position.
+     *  If the current power is at least 3 (the solar panel's cost),
+     *  deducts 3 power and returns the new instance.
+     *  Returns null if there is insufficient power.
      *
      * @param position the position to spawn at
      * @return a new SolarPanel, or null if insufficient power
+     * @stage2
      * @stage3
      */
     @Override
     public SolarPanel spawnSolarPanel(Positionable position) {
-        // Stage 3: Implement spawning logic
+        // has sufficient power
         if (hasRequiredPower(SolarPanel.COST)) {
             adjust(-SolarPanel.COST);
+            // spawn solar panel
             return new SolarPanel(position);
         }
-        return null; // Stage 2: Return null
+        return null; // insufficient power
     }
 
     /**
      * Attempts to spawn a Teleporter at the given position.
+     * If the current power is at least 2 (the teleporter's cost),
+     * deducts 2 power, records the teleporter's position for future
+     * getNextTeleporterPosition(toxiccleanup.engine.game.Positionable) calls,
+     * and returns the new instance.
+     * Returns null if there is insufficient power.
      *
      * @param position the position to spawn at
-     * @return a new Teleporter, or null if insufficient power
+     * @return a new Teleporter, or null if insufficient power (< 2)
+     * @stage2
      * @stage3
      */
     @Override
@@ -170,10 +188,15 @@ public class MachinesManager implements Machines {
 
     /**
      * Attempts to spawn a Pump at the given position.
+     * If the current power is at least 5 (the pump's cost), deducts 5 power
+     * and returns a new Pump that will call Adjustable.adjust(int) on adjustable
+     * every 100 ticks. Returns null if there is insufficient power.
      *
-     * @param position the position to spawn at
-     * @param adjustable the target to adjust (ToxicField)
+     * @param position the position to spawn Pump at
+     * @param adjustable the target ToxicField to whose adjustable value is reduced each time
+     *                   the pump fires
      * @return a new Pump, or null if insufficient power
+     * @stage2
      * @stage3
      */
     @Override

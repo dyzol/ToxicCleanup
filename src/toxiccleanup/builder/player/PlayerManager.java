@@ -14,26 +14,20 @@ import java.util.List;
 
 /**
  * Manages all aspects of the player's state and behaviour during the game. This class:
- *
- * <ul>
- *   <li>Holds and controls the {@link Cleaner} entity that is rendered on screen.</li>
- *   <li>Tracks the player's current HP (starts at 10, clamped to [0, 10]) and exposes it
- *       via the {@link Harmable} interface.</li>
- *   <li>Each tick, reads keyboard input (WASD) to move the player one tile per movement
- *       timer interval, updates the facing sprite accordingly, and enforces window boundaries.</li>
- *   <li>After moving, determines which tiles are currently under the player and calls
- *       {@link toxiccleanup.builder.entities.PlayerOverHook#playerOver} on each of them so tiles can react
- *       (e.g. a {@link toxiccleanup.builder.entities.tiles.Chasm} deals damage, a
- *       {@link toxiccleanup.builder.entities.tiles.Dirt} listens for build input).</li>
- *   <li>When the player's HP reaches 0, the dead sprite is shown and movement/interaction stops.</li>
- * </ul>
- *
- * @hint The player manager should hold an instance of {@link Cleaner}.
+ * Holds and controls the Cleaner entity that is rendered on screen.
+ * Tracks the player's current HP (starts at 10, clamped to [0, 10]) and exposes it via the Harmable interface.
+ * Each tick, reads keyboard input (WASD) to move the player one tile per movement timer interval,
+ * updates the facing sprite accordingly, and enforces window boundaries.
+ * After moving, determines which tiles are currently under the player and calls
+ * PlayerOverHook.playerOver(toxiccleanup.engine.EngineState, toxiccleanup.builder.GameState)
+ * on each of them so tiles can react (e.g. a Chasm deals damage, a Dirt listens for build input).
+ * When the player's HP reaches 0, the dead sprite is shown and movement/interaction stops.
+ * hint The player manager should hold an instance of Cleaner.
  * @multistage
  */
 public class PlayerManager implements Player {
     private static final int MAX_HP = 10;
-    private static final int SPEED = 2; // originally 1, change this back after testing
+    private static final int SPEED = 1;
     private final Cleaner player;
     //used to track if players recently moved
     private final TickTimer movementTimer = new RepeatingTimer(10);
@@ -50,7 +44,6 @@ public class PlayerManager implements Player {
      * @provided
      */
     public PlayerManager(Positionable position) {
-        super();
         player = new Cleaner(position);
         hp = MAX_HP;
     }
@@ -63,32 +56,28 @@ public class PlayerManager implements Player {
      * <p>If the player is alive and one or more movement keys are pressed, the player moves by
      * exactly one tile in a single direction. The movement keys are:</p>
      *
-     * <table>
-     * <caption>&nbsp;</caption>
-     * <tr><th>Key</th><th>Direction</th></tr>
-     * <tr><td>w</td><td>NORTH</td></tr>
-     * <tr><td>s</td><td>SOUTH</td></tr>
-     * <tr><td>a</td><td>WEST</td></tr>
-     * <tr><td>d</td><td>EAST</td></tr>
-     * </table>
+     * w NORTH
+     * s SOUTH
+     * a WEST
+     * d EAST
      *
-     * <p>If multiple movement keys are pressed, only one movement is applied. The priority order is
-     * {@code w}, then {@code s}, then {@code a}, then {@code d}.</p>
+     * <p>If multiple movement keys are pressed, only one movement is applied. The priority order
+     * is
+     * w, s, a, d</p>
      *
-     * <p>After movement, this method processes interactions with any tiles currently overlapping the
-     * player's position by invoking their player-over behaviour.</p>
+     * After movement, this method processes interactions with any tiles currently overlapping the
+     * player's position by invoking their player-over behaviour.
+     * If the player is not alive, the player does not move, and the dead sprite is shown.
      *
-     * <p>If the player is not alive, the player does not move, and the dead sprite is shown.</p>
+     * @stage0 Movement is performed as a one-tile step (equivalent to
+     * {player.move(direction, 1)} when that helper is available)
      *
-     * <p><span style="color:#9B59B6;">Provided:</span> Starter code only; The method signature is provided without a body.
+     *  <p>Hint: Read movement input using {@code state.getKeys().isDown(char)}
+     *  (for 'w' 's' 'a' 'd').
      *
-     * <p><span style="color:#14CC2A;">Stage 0:</span> Movement is performed as a one-tile step (equivalent to {@code player.move(direction, 1)} when that helper is available)
-     *
-     *  <p><b>Hint:</b> Read movement input using {@code state.getKeys().isDown(char)}
-     *  (for {@code 'w'}, {@code 's'}, {@code 'a'}, {@code 'd'}).
-     *
-     * <p><span style="color:#F55600;">Stage 3:</span> Ticks the managed player entity, checks if the
-     * player is alive before moving, processes tile interactions by invoking their player-over behaviour,
+     * @stage3 Ticks the managed player entity, checks if the
+     * player is alive before moving, processes tile interactions by invoking their player-over
+     * behaviour,
      * and displays the dead sprite if the player is no longer alive.
      *
      * @param state the current state of the toxiccleanup.engine.
@@ -104,21 +93,21 @@ public class PlayerManager implements Player {
         // first tick the player entity
         player.tick(state, game);
 
-        // check if player is alive
+        // ensure player is alive
         if (!isAlive()) {
             return;
         }
-        // After moving, before tile interactions
+
         int tileSize = state.getDimensions().tileSize();
 
-        movementTimer.tick();
+        movementTimer.tick(); // counts down from 10
 
-        // Only move when timer is finished (cooldown is over)
+        // only move when timer is finished (cooldown is over)
         if (movementTimer.isFinished()) {
             // Priority order: w > s > a > d
             if (state.getKeys().isDown('w')) {
                 player.move(Direction.NORTH, tileSize);
-                // Timer resets automatically (RepeatingTimer resets after isFinished)
+                // timer resets automatically (RepeatingTimer resets after isFinished)
             } else if (state.getKeys().isDown('s')) {
                 player.move(Direction.SOUTH, tileSize);
             } else if (state.getKeys().isDown('a')) {
@@ -133,30 +122,40 @@ public class PlayerManager implements Player {
         int windowWidth = state.getDimensions().windowSize();
         int windowHeight = state.getDimensions().windowSize();
 
-        // half a tile before edge to prevent half the player get offscreen
-        int minX = tileSize / 2;
+        // ensure player moves within the game window boundaries
+        int minX = tileSize / 2; // half a tile before edge
         int maxX = windowWidth - (tileSize / 2);
         int minY = tileSize / 2;
-        int maxY = windowHeight - (tileSize / 2);
+        final int maxY = windowHeight - (tileSize / 2);
 
         int newX = player.getX();
         int newY = player.getY();
 
-        if (newX < minX) player.setX(minX);
-        if (newX > maxX) player.setX(maxX);
-        if (newY < minY) player.setY(minY);
-        if (newY > maxY) player.setY(maxY);
+        if (newX < minX) {
+            player.setX(minX);
+        }
+        if (newX > maxX) {
+            player.setX(maxX);
+        }
+        if (newY < minY) {
+            player.setY(minY);
+        }
+        if (newY > maxY) {
+            player.setY(maxY);
+        }
 
-        // Stage 3: Process tile interactions AFTER movement
-        // Get tiles at player's position and call playerOver on each
+        // Stage 3: process tile interactions AFTER movement
+        // list of tiles at player's position
         List<Tile> tiles = game.getWorld().tilesAtPosition(getPosition(), state.getDimensions());
+        // call playerOver on each
         for (Tile tile : tiles) {
             tile.playerOver(state, game);
         }
     }
 
     /**
-     * Returns whether the player is currently alive. Used by {@link toxiccleanup.builder.ToxicCleanup#tick}
+     * Returns whether the player is currently alive. Used by
+     * toxiccleanup.builder.ToxicCleanup tick
      * to decide whether to display the game-over screen and stop gameplay, and by
      * {@link #tick} to decide whether to show the dead sprite and skip movement.
      *
@@ -235,10 +234,12 @@ public class PlayerManager implements Player {
     /**
      * Subtracts the given amount from the player's HP score, then clamps the result to the
      * range [0, {@link #getMaxHp()}]. A positive {@code amount} causes damage; the interface
-     * convention (from {@link toxiccleanup.builder.machines.Adjustable}) uses positive values to reduce HP.
+     * convention (from {@link toxiccleanup.builder.machines.Adjustable}) uses positive values
+     * to reduce HP.
      * HP cannot go below 0 or above the maximum.
      *
-     * <p><span style="color:#9B59B6;">Provided:</span> The method signature is provided without a body.
+     * <p><span style="color:#9B59B6;">Provided:</span> The method signature is provided
+     * without a body.
      *
      * @param amount amount to subtract from the player's HP (positive = damage).
      * @provided
@@ -248,7 +249,7 @@ public class PlayerManager implements Player {
         hp -= amount;
         hp = Math.clamp(hp, 0, MAX_HP);
 
-        // Show dead sprite when HP reaches 0
+        // use dead sprite when HP reaches 0
         if (hp == 0) {
             player.setDeadSprite();
         }

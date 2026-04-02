@@ -22,6 +22,7 @@ public class ToxicField extends Tile implements Adjustable {
      * Constructs a new toxic field tile with toxicity 6.
      *
      * @param position the position to place this tile at
+     * @require position.getX() >= 0, position.getY() >= 0
      * @stage1
      */
     public ToxicField(Positionable position) {
@@ -33,13 +34,14 @@ public class ToxicField extends Tile implements Adjustable {
      * Reduces the toxicity of this field by the given amount.
      * Updates the sprite based on the new toxicity level:
      * <ul>
-     *   <li>Toxicity &ge; 3: default toxic appearance</li>
+     *   <li>Toxicity >= 3: default toxic appearance</li>
      *   <li>Toxicity = 2: cleanup started</li>
      *   <li>Toxicity = 1: cleanup nearly done</li>
      *   <li>Toxicity = 0: fully cleaned, marks pump for removal</li>
      * </ul>
+     * Specified by adjust in interface Adjustable
      *
-     * @param amount the amount to reduce toxicity by
+     * @param amount the amount to reduce toxicity by (typically 1)
      * @stage1
      */
     @Override
@@ -62,6 +64,8 @@ public class ToxicField extends Tile implements Adjustable {
 
     /**
      * Returns whether this field still contains toxicity.
+     *Used by ToxicWorld.isToxic() to determine whether the game has been won.
+     * Also used by the pump-spawning logic to prevent placing a pump on an already-clean field
      *
      * @return true if toxicity > 0, false otherwise
      * @stage1
@@ -73,22 +77,26 @@ public class ToxicField extends Tile implements Adjustable {
     /**
      * Handles player interaction while on this tile.
      * - Left click: build a Pump (if toxic and no stacked entities)
+     * Specified by Tile.playerOver
      *
-     * @param state the engine state
-     * @param game the game state
+     * @param state current engine input/state
+     * @param game current game state
      * @stage3
      */
     @Override
     public void playerOver(EngineState state, GameState game) {
-        super.playerOver(state, game);
+        super.playerOver(state, game); // let stacked entities react first
 
-        // Check if field is toxic and empty
+        // check if there's already a pump (or anything else)
         boolean isEmpty = getStackedEntities().isEmpty();
 
+        // build condition: field is toxic, no pump, player left-clicked
         if (isToxic() && isEmpty && state.getMouse().isLeftPressed()) {
+            // spawnPump returns new Pump at tile's position, cleaning 'this' toxic field itself
+            // but only if has enough power
             Pump pump = game.getMachines().spawnPump(getPosition(), this);
-            if (pump != null) {
-                placeOn(pump);
+            if (pump != null) { // if not enough power, pump's spawning fails
+                placeOn(pump); // reaching here means spawning successful
             }
         }
     }

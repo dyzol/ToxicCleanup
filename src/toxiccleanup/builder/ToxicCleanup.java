@@ -1,7 +1,5 @@
 package toxiccleanup.builder;
 
-import toxiccleanup.builder.GameState;
-import toxiccleanup.builder.ToxicCleanupGameState;
 import toxiccleanup.builder.entities.tiles.Dirt;
 import toxiccleanup.builder.entities.tiles.Tile; // for stage 4
 import toxiccleanup.builder.machines.MachinesManager;
@@ -37,9 +35,9 @@ public class ToxicCleanup implements Game {
     private static final int GAME_DURATION_TICKS = 18000; // 5 minutes at 60 ticks/sec
 
     private final PlayerManager playerManager; // stage 0
-    private ToxicWorld world; // stage 2
-    private MachinesManager machinesManager;
-    private GuiManager guiManager;
+    private final ToxicWorld world; // stage 2
+    private final MachinesManager machinesManager;
+    private final GuiManager guiManager;
 
     private int damageTimer;  // Countdown for periodic damage
     private boolean gameOver;  // Prevent further updates after win/loss
@@ -56,7 +54,8 @@ public class ToxicCleanup implements Game {
      * <p><span style="color:#2E75B2;">Stage 1:</span> Loads the game world from the map file using
      * {WorldBuilder#fromFile} with the given dimensions.
      *
-     * <p><span style="color:#F5D000;">Stage 2:</span> Initialises the {MachinesManager} and {GuiManager}.
+     * <p><span style="color:#F5D000;">Stage 2:</span> Initialises the {MachinesManager} and
+     * {GuiManager}.
      *
      * <p><span style="color:#D02F83;">Stage 4:</span> spawns a starter
      * {@link Teleporter} at the given position.
@@ -74,9 +73,13 @@ public class ToxicCleanup implements Game {
      */
     public ToxicCleanup(Dimensions dimensions, Positionable starterTeleporterPosition)
             throws IOException, WorldLoadException {
+        final int tileSize = dimensions.tileSize();
+
         // calculate player's starting position
-        final int playerX = 5 * dimensions.tileSize() + dimensions.tileSize() / 2;
-        final int playerY = 5 * dimensions.tileSize() + dimensions.tileSize() / 2;
+        final int playerTileX = 5;
+        final int playerTileY = 5;
+        final int playerX = dimensions.tileToPixel(playerTileX);
+        final int playerY = dimensions.tileToPixel(playerTileY);
 
         // stage 0: initialise player manager
         this.playerManager = new PlayerManager(new Position(playerX, playerY));
@@ -93,14 +96,21 @@ public class ToxicCleanup implements Game {
         this.gameOver = false;
 
         // Stage 4: Spawn starter teleporter at the given position
-        Teleporter starterTeleporter = machinesManager.spawnTeleporter(starterTeleporterPosition);
+        // convert pixel to tiles
+        int tileX = starterTeleporterPosition.getX() / tileSize;
+        int tileY = starterTeleporterPosition.getY() / tileSize;
+        // center tile
+        int centerX = dimensions.tileToPixel(tileX);
+        int centerY = dimensions.tileToPixel(tileY);
+        Positionable centeredStarterTeleporter = new Position(centerX, centerY);
+
+        Teleporter starterTeleporter = machinesManager.spawnTeleporter(centeredStarterTeleporter);
         if (starterTeleporter != null) {
-            // Find the tile at that position and place the teleporter on it
-            List<Tile> tiles = world.tilesAtPosition(starterTeleporterPosition, dimensions);
+            // find the tile at that position and place the teleporter on it
+            List<Tile> tiles = world.tilesAtPosition(centeredStarterTeleporter, dimensions);
             for (Tile tile : tiles) {
-                // If it's dirt, pave it first
-                if (tile instanceof Dirt) {
-                    Dirt dirtTile = (Dirt) tile;
+                // if it's dirt, pave it first
+                if (tile instanceof Dirt dirtTile) {
                     if (!dirtTile.isPaved()) {
                         dirtTile.pave();
                     }
@@ -113,20 +123,26 @@ public class ToxicCleanup implements Game {
     /**
      *Advances the game by one frame.
      *
-     * <p>Each call updates active game systems (world, player, and GUI), applies end-state checks,
+     * <p>Each call updates active game systems (world, player, and GUI), applies end-state checks
      * and enforces periodic toxicity damage during ongoing play.
      *
-     * <p><span style="color:#9B59B6;">Provided:</span> Starter code only; No method body is provided.
+     * <p><span style="color:#9B59B6;">Provided:</span> Starter code only; No method body
+     * is provided
      *
      * <p><span style="color:#14CC2A;">Stage 0:</span> Ticks the player by creating a new
-     * {@link ToxicCleanupGameState} from the {@link PlayerManager} and passing it along with the engine
+     * {@link ToxicCleanupGameState} from the {@link PlayerManager} and passing it along with
+     * the engine
      * state to {@link PlayerManager#tick}.
      *
-     * <p><span style="color:#F5D000;">Stage 2:</span> Updates the {@link ToxicCleanupGameState} to include the
-     * {@link ToxicWorld} and {@link MachinesManager}. Ticks the {@link ToxicWorld} and {@link GuiManager} each frame.
+     * <p><span style="color:#F5D000;">Stage 2:</span> Updates the {@link ToxicCleanupGameState}
+     * to include the
+     * {@link ToxicWorld} and {@link MachinesManager}. Ticks the {@link ToxicWorld} and
+     * {@link GuiManager} each frame.
      *
-     * <p><span style="color:#D02F83;">Stage 4:</span> After ticking the world, checks if the player is no longer alive.
-     * and displays the game-over screen, checks if no toxic fields remain and displays the win screen,
+     * <p><span style="color:#D02F83;">Stage 4:</span> After ticking the world, checks if
+     * the player is no longer alive.
+     * and displays the game-over screen, checks if no toxic fields remain and displays
+     * the win screen,
      * and advances the damage timer dealing 1 damage to the player every 1800 ticks.
      *
      * @param engine current engine input/state.
@@ -171,19 +187,20 @@ public class ToxicCleanup implements Game {
      * @stage4
      */
     private void checkWinLoseConditions(EngineState engine, GameState game) {
-        // Lose condition: player HP <= 0
+        // lose condition: player HP <= 0
         if (!playerManager.isAlive()) {
             gameOver = true;
             guiManager.lose(engine);
             return;
         }
 
-        // Win condition: no toxic fields remain
+        // win condition: no toxic fields remain
         if (!world.isToxic()) {
             gameOver = true;
             guiManager.win(engine);
         }
-        // Stage 4: Lose condition - time runs out
+
+        // stage 4 extra lose condition: timer runs out
         int currentTick = engine.currentTick();
         int ticksRemaining = GAME_DURATION_TICKS - currentTick;
         if (ticksRemaining <= 0) {
@@ -206,7 +223,7 @@ public class ToxicCleanup implements Game {
             return;
         }
 
-        // Only apply damage if there are toxic fields
+        // only apply damage if there are toxic fields
         if (world.isToxic()) {
             damageTimer++;
 
@@ -216,7 +233,7 @@ public class ToxicCleanup implements Game {
                 damageTimer = 0;  // Reset timer
             }
         } else {
-            // No toxic fields, reset timer
+            // no toxic fields, reset timer
             damageTimer = 0;
         }
     }

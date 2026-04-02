@@ -3,7 +3,7 @@ package toxiccleanup.builder.world;
 import toxiccleanup.builder.GameState;
 import toxiccleanup.builder.Tickable;
 import toxiccleanup.builder.entities.tiles.Tile;
-import toxiccleanup.builder.entities.tiles.ToxicField; // add
+import toxiccleanup.builder.entities.tiles.ToxicField; // for checking toxicity
 import toxiccleanup.builder.ui.RenderableGroup;
 import toxiccleanup.engine.EngineState;
 import toxiccleanup.engine.game.Positionable;
@@ -17,6 +17,8 @@ import java.util.Map;
 
 /**
  * A World implementation for the ToxicCleanup game.
+ * A world consists of a grid of tiles. Each tick, the world progresses every tile's state,
+ * and via the render method collects all renderables from each tile and its stacked entities
  *
  * @stage1
  */
@@ -37,6 +39,10 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
     /**
      * Converts grid coordinates into a string key for the hashmap
      * for example, getKey(5, 3) returns "5,3"
+     *
+     * @param tileX the tile horizontal number
+     * @param tileY the tile's vertical number
+     * @return the key, a string format of tile grid coordinates
      */
     private String getKey(int tileX, int tileY) {
         return tileX + "," + tileY;
@@ -44,12 +50,12 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
 
     /**
      * Calculates tile size from a tile's position.
-     * Since tiles are placed at (col * tileSize + tileSize/2),
-     * we can find tileSize by looking at the x coordinate.
-     * The smallest x coordinate should be tileSize/2.
+     * This is needed in place() but it does not receive Dimensions (which has tileSize)
+     *
+     * @return tile size
      */
     private int getTileSizeFromTiles() {
-        // Find the smallest x coordinate among all tiles
+        // find the smallest x coordinate among all tiles
         int minX = Integer.MAX_VALUE;
         for (List<Tile> tiles : tileGrid.values()) {
             for (Tile tile : tiles) {
@@ -58,26 +64,30 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
                 }
             }
         }
-        // The smallest x is tileSize/2, so tileSize = minX * 2
+        // the smallest x is tileSize/2, so tileSize = minX * 2
         return minX == Integer.MAX_VALUE ? 50 : minX * 2;
     }
 
     /**
-     * Returns all tiles whose grid cell matches the given pixel position.
+     * Given a pixel position, returns all tiles in that position's grid cell
      * Specifically, it takes a pixel position, converts to tile coords and looks up all
      * tiles at that grid cell
      *
-     * @param position the pixel position to look up
+     * @param position the pixel position to look up (e.g. the player's current position)
      * @param dimensions the window dimensions for pixel-to-tile conversion
      * @return all tiles at that grid cell, empty list if no tiles found
      * @stage1
      */
     @Override
     public List<Tile> tilesAtPosition(Positionable position, Dimensions dimensions) {
-        int tileSize = dimensions.tileSize();  // Use dimensions for lookup
+        int tileSize = dimensions.tileSize();
         int tileX = position.getX() / tileSize;
         int tileY = position.getY() / tileSize;
+
+        // create map key using grid coordinates
         String key = getKey(tileX, tileY);
+        // getOrDefault() maps key to list of tiles at that cell
+        // if key does NOT exist, return new empty list
         return tileGrid.getOrDefault(key, new ArrayList<>());
     }
 
@@ -100,7 +110,9 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
     }
 
     /**
-     * Returns a copy of all tiles in the world.
+     * Returns a copy of all tiles in the world. Modifying the returned list will
+     * not affect the world's internal tile collection (although mutating tile objects
+     * within it will).
      * Specifically, collects every tile from every grid cell into a single list
      *
      * @return a list of all tiles
@@ -108,8 +120,11 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
      */
     @Override
     public List<Tile> allTiles() {
+        // defensive copy which creates a new list each time allTiles() is called
         List<Tile> all = new ArrayList<>();
+
         for (List<Tile> tiles : tileGrid.values()) {
+            // add the same tile objects to new list
             all.addAll(tiles);
         }
         return all;
@@ -123,25 +138,28 @@ public class ToxicWorld implements World, Tickable, RenderableGroup {
      */
     @Override
     public void place(Tile tile) {
-        int tileSize = getTileSizeFromTiles();
+        int tileSize;
 
         if (tileGrid.isEmpty()) {
-            // For the first tile, we can't calculate tileSize yet
-            // We'll use a temporary method: infer from the tile's position
-            // Since tile is at center, tileSize is at least (x * 2) for col=0
-            // For col=0, x = tileSize/2, so tileSize = x * 2
+            // infer tileSize from its position
             if (tile.getX() > 0) {
                 tileSize = tile.getX() * 2;
             } else {
                 tileSize = 50; // fallback
             }
         } else {
-            tileSize = getTileSizeFromTiles();
+            tileSize = getTileSizeFromTiles(); // getTileSize needs existing tiles
         }
         int tileX = tile.getX() / tileSize;
         int tileY = tile.getY() / tileSize;
         String key = getKey(tileX, tileY);
-        tileGrid.computeIfAbsent(key, k -> new ArrayList<>()).add(tile);
+
+        List<Tile> tiles = tileGrid.get(key);
+        if (tiles == null) {
+            tiles = new ArrayList<>();
+            tileGrid.put(key, tiles);
+        }
+        tiles.add(tile);
     }
 
     /**

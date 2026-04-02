@@ -34,7 +34,8 @@ public class WorldLoadException extends Exception {
      * Constructs a new world load exception that occurred loading a particular row.
      *
      * @param message Explanation of the problem that occurred.
-     * @param row     The row number where the error occurred. Indicates the issue occurs on line row +
+     * @param row     The row number where the error occurred. Indicates the issue occurs
+     *                on line row +
      *                1.
      */
     public WorldLoadException(String message, int row) {
@@ -46,7 +47,8 @@ public class WorldLoadException extends Exception {
      * Constructs a new world load exception that occurred loading a particular row and column.
      *
      * @param message Explanation of the problem that occurred.
-     * @param row     The row number where the error occurred. Indicates the issue occurs on line row +
+     * @param row     The row number where the error occurred. Indicates the issue occurs on
+     *                line row +
      *                1.
      * @param column  The column number where the error occurred. Indicates the issue occurs at
      *                character column + 1.
@@ -60,8 +62,8 @@ public class WorldLoadException extends Exception {
     /**
      * Returns the exception message, appending row and column information if available.
      *
-     * @return The exception message, optionally suffixed with the line and character position where
-     *         loading failed.
+     * @return The exception message, optionally suffixed with the line and character position
+     *         where loading failed.
      */
     @Override
     public String getMessage() {

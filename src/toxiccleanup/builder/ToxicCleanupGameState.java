@@ -25,18 +25,21 @@ public class ToxicCleanupGameState implements GameState {
      * Use this constructor when only player-related state is needed and world or machine
      * access is not required.
      * @param player - the player manager, used to query position, HP, and move the player.
+     * @stage0
      */
     public ToxicCleanupGameState(PlayerManager player) {
         this.world = null;
         this.player = player;
         this.machines = null;
     }
+
     /**
      * Constructs a new ToxicCleanupGameState wrapping the three core game components.
      *
      * @param world the game world
      * @param player the player manager
      * @param machines the machine manager
+     * @stage2
      */
     public ToxicCleanupGameState(World world, PlayerManager player, Machines machines) {
         this.world = world;
@@ -48,10 +51,9 @@ public class ToxicCleanupGameState implements GameState {
      * Returns the current state of the game world.
      * The returned world is mutable, that is, calling mutator methods such as World.place(Tile)
      * will modify the world.
-     * Specified by:
-     * getWorld in interface GameState
-     * Returns:
-     * The game world.
+     * Specified by getWorld in interface GameState
+     *
+     * @return The game world.
      */
     @Override
     public World getWorld() {
@@ -60,23 +62,22 @@ public class ToxicCleanupGameState implements GameState {
 
     /**
      * Returns the current state of the player. Useful for retrieving the player's location.
-     * Specified by:
-     * getPlayer in interface GameState
-     * Returns:
-     * The player of the game.
+     * Specified by getPlayer in interface GameState
+     *
+     * @return The player of the game.
      */
     @Override
      public Player getPlayer() {
         return player;
-     }
+    }
 
     /**
-     * Returns the current state of the machine system.
-     * Specified by:
-     * getMachines in interface GameState
-     * Returns:
-     * the Machines instance, providing access to machine spawning, teleporter locations, and the power system.
-     */
+      * Returns the current state of the machine system.
+      * Specified by getMachines in interface GameState
+     *
+      * @return the Machines instance, providing access to machine spawning,
+      *         teleporter locations, and the power system.
+      */
     @Override
     public Machines getMachines() {
         return machines;

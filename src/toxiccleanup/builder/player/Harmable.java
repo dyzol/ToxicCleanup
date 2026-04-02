@@ -3,7 +3,7 @@ package toxiccleanup.builder.player;
 import toxiccleanup.builder.machines.Adjustable;
 
 /**
- * Indicates the implementing class has a Hp score that can be adjusted as per {@link Adjustable},
+ * Indicates the implementing class has a Hp score that can be adjusted as per {Adjustable},
  * has a current hp that can be accessed via {@link Harmable#getHp()} and a max hp that can
  * be accessed via {@link Harmable#getMaxHp()}.
  *

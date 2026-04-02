@@ -20,13 +20,13 @@ import java.util.List;
  * in the grid and is responsible for:
  *
  * <ul>
- *   <li>Displaying itself using a {@link SpriteGroup} set at construction (or changed later
+ *   <li>Displaying itself using a SpriteGroup set at construction (or changed later
  *       via setArt).</li>
  *   <li>Maintaining a stack of {@link GameEntity}s that sit on top of it (e.g. a
- *       {@link toxiccleanup.builder.machines.SolarPanel} placed on a paved {@link Dirt} tile).</li>
+ *       toxiccleanup.builder.machines.SolarPanel placed on a paved {@link Dirt} tile).</li>
  *   <li>Ticking itself and all stacked entities each frame, and removing any that are marked
  *       for removal.</li>
- *   <li>Implementing {@link PlayerOverHook#playerOver} to react when the player stands on this
+ *   <li>Implementing {@link PlayerOverHook playerOver} to react when the player stands on this
  *       cell, and forwarding the event to any stacked entities that also implement the hook.</li>
  *   <li>Collecting all {@link Renderable}s for itself and its stack via render.</li>
  * </ul>
@@ -46,9 +46,8 @@ import java.util.List;
  */
 public abstract class Tile extends GameEntity implements PlayerOverHook, RenderableGroup, HasTick {
 
-    private SpriteGroup art; // sprite group used for this tile's artwork
-
-    private final List<GameEntity> stackedEntities; // list of entities stacked on top of this tile
+    private SpriteGroup art; // group of sprites for tile art
+    private final List<GameEntity> stackedEntities; // entities stacked on this tile
 
     /**
      * Constructs an instance of Tile at the given Positionable.
@@ -60,7 +59,9 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      *          The given sprite group must contain a 'default' sprite.
     */
     public Tile(Positionable position, SpriteGroup art) {
+        // inherit position from GameEntity
         super(position);
+        // initialise art to use and array of entities
         this.art = art;
         this.stackedEntities = new ArrayList<>();
         updateSprite("default");
@@ -71,7 +72,7 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      * the 'default' sprite within the new group. Used when a tile changes its visual appearance
      * entirely, for example when a Dirt tile is paved and switches from the dirt sprite group
      * to the paved sprite group.
-     * @param art, a sprite group to use for this tile's sprites going forward.
+     * @param art a sprite group to use for this tile's sprites going forward.
      * @require The given sprite group must contain a 'default' sprite.
      */
     public void setArt(SpriteGroup art) {
@@ -101,14 +102,13 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      */
     @Override
     public void tick(EngineState engine, GameState game) {
-        // remove entities marked for removal
-        // removeIf handles concurrent modification
-        stackedEntities.removeIf(GameEntity::isMarkedForRemoval);
-
-        // Tick each remaining stacked entity
+        // Tick each remaining stacked entity first to prevent pump remaining onscreen after win
         for (GameEntity entity : stackedEntities) {
             entity.tick(engine, game);
         }
+        // remove entities marked for removal
+        // removeIf handles concurrent modification
+        stackedEntities.removeIf(GameEntity::isMarkedForRemoval);
     }
 
     /**
@@ -124,7 +124,7 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      * Used by subclasses in their playerOver(toxiccleanup.engine.EngineState,
      * toxiccleanup.builder.GameState) implementations to forward the event to relevant stacked
      * machines without needing to type-check manually.
-     * @return a new List containing only the stacked entities that implement PlayerOverHook;
+     * @return a new List containing only the entities that implement PlayerOverHook;
      *         empty if no such entities exist.
      */
     public List<PlayerOverHook> getStackedEntitiesWithPlayerOverHook() {
@@ -145,7 +145,7 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      * @ensures The entity is contained within getStackedEntities().
      */
     public void placeOn(GameEntity tile) {
-        stackedEntities.add(tile);
+        stackedEntities.add(tile); // add tile to list of stacked entities
     }
 
     /**
@@ -156,7 +156,7 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
      * logic (e.g. dealing damage, building machines).
      * Specified by: playerOver in interface PlayerOverHook
      * @param state - The state of the toxiccleanup.engine, including the mouse,
-     * keyboard information and dimension. Useful for processing keyboard presses or mouse movement.
+     * keyboard information and dimension. Useful for processing keyboard presses or mouse movement
      * @param game - The state of the game, including the player and world. Can be used to query or
      * update the game state.
      */
@@ -167,20 +167,21 @@ public abstract class Tile extends GameEntity implements PlayerOverHook, Rendera
             hook.playerOver(state, game);
         }
     }
+
     /**
      * A collection of items to render, including the tile and any entities stacked on it.
-     * This tile must be the first renderable in the list so that it is rendered behind each stacked entity. The remaining list must match the order of getStackedEntities().
+     * This tile must be the first renderable in the list so that it is rendered behind each
+     * stacked entity. The remaining list must match the order of getStackedEntities().
      * Specified by: render in interface RenderableGroup
      * @return The list of renderables required to draw this tile to the screen.
      */
     @Override
     public List<Renderable> render() {
         List<Renderable> renderables = new ArrayList<>();
-        // Add this tile first (so it renders behind stacked entities)
-        renderables.add(this); // tile drawn first (background)
-        // Then add all stacked entities in order
+        // this tile first (eg. grass, dirt, chasm)
+        renderables.add(this);
+        // add all stacked entities in order
         renderables.addAll(stackedEntities);
         return renderables;
     }
-
 }

@@ -10,14 +10,18 @@ import toxiccleanup.engine.timing.RepeatingTimer;
 import toxiccleanup.engine.timing.TickTimer;
 
 /**
- * A {@link Teleporter} is a machine that allows the player to instantly travel between teleporter
- * locations on the map. When the player stands on a teleporter and presses the use key ('e'),
- * they are moved to a randomly chosen other teleporter's position — provided the shared power
+ * A Teleporter is a machine that allows the player to instantly travel
+ * between teleporter
+ * locations on the map. When the player stands on a teleporter and presses the
+ * use key ('e'),
+ * they are moved to a randomly chosen other teleporter's position — provided the
+ * shared power
  * system has at least {COST} power units available. Power is NOT consumed on use;
  * it is only required to be present.
  *
  * <p>Costs {COST} power units to build. When powered, cycles through a sprite animation
- * every 12 ticks. If power drops below the requirement, the animation pauses. Rendered using
+ * every 12 ticks. If power drops below the requirement, the animation pauses. Rendered
+ * using
  * {@link SpriteGallery#teleporter}.
  *
  * <p><span style="color:#9B59B6;">Provided:</span> The class is provided without
@@ -49,19 +53,9 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
     }
 
     /**
-     * Returns the minimum power required for this teleporter to operate.
-     *
-     * @return 2
-     * @stage3
-     */
-    @Override
-    public int getPowerRequirement() {
-        return POWER_REQUIREMENT;
-    }
-
-    /**
      * Called every tick. Advances the animation timer and updates the sprite
-     * when the timer fires and power is sufficient.
+     * when the timer fires and power is sufficient (>= 2 power units)
+     * If insufficient power, animation pauses
      *
      * @param engine the engine state
      * @param game the game state
@@ -70,12 +64,24 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
     @Override
     public void tick(EngineState engine, GameState game) {
         animationTimer.tick();
-        if (animationTimer.isFinished() && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
-            // Cycle through animation frames
+        if (animationTimer.isFinished()
+                && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
+            // cycle through animation frames
             animationFrame = (animationFrame + 1) % 7;
             String frameNumber = String.valueOf(animationFrame + 1);
             setSprite(SpriteGallery.teleporter.getSprite(frameNumber));
         }
+    }
+
+    /**
+     * Returns the minimum power required for this teleporter to operate.
+     *
+     * @return 2, the amount of power required for this teleporter to operator
+     * @stage3
+     */
+    @Override
+    public int getPowerRequirement() {
+        return POWER_REQUIREMENT;
     }
 
     /**
@@ -88,8 +94,10 @@ public class Teleporter extends GameEntity implements PlayerOverHook, Powered {
      */
     @Override
     public void playerOver(EngineState state, GameState game) {
-        if (state.getKeys().isDown('e') && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
-            Positionable newPosition = game.getMachines().getNextTeleporterPosition(getPosition());
+        if (state.getKeys().isDown('e')
+                && game.getMachines().hasRequiredPower(POWER_REQUIREMENT)) {
+            Positionable newPosition =
+                    game.getMachines().getNextTeleporterPosition(getPosition());
             game.getPlayer().setPosition(newPosition);
         }
     }

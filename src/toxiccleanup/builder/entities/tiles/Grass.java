@@ -15,7 +15,8 @@ public class Grass extends Tile {
      * Constructs a new grass tile at the given position.
      *
      * @param position the position to place this tile at
-     * @requires position.getX() &gt;= 0, position.getY() &gt;= 0
+     * @requires 0 <= position.getX() <= window width,
+     * 0 <= position.getY() <= window height
      * @stage1
      */
     public Grass(Positionable position) {

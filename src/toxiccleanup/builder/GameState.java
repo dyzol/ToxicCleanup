@@ -31,7 +31,8 @@ public interface GameState {
 
     /**
      * Returns the current state of the power system and access to methods for creating machines
-     * when sufficient power is available. Useful for querying current power, building new machines, and checking machine-related state.
+     * when sufficient power is available. Useful for querying current power,
+     * building new machines, and checking machine-related state.
      *
      * @return the current state of the power system and access to methods for creating machines
      * when sufficient power is available

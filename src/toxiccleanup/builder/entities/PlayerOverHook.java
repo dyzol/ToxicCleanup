@@ -18,7 +18,8 @@ public interface PlayerOverHook {
      * any interaction that occurs while the player overlaps the
      * corresponding tile or entity.
      *
-     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard information and
+     * @param state The state of the toxiccleanup.engine, including the mouse, keyboard
+     *              information and
      *              dimension. Useful for processing keyboard presses or mouse movement.
      * @param game  The state of the game, including the player and world. Can be used to query or
      *              update the game state.

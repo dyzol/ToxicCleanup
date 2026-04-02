@@ -3,7 +3,8 @@ package toxiccleanup.builder.machines;
 /**
  * Indicates the implementing object has a key adjustable value, used for things such as power,
  * hp etc.
- * See also {@link Machines}, {@link toxiccleanup.builder.player.Harmable} for examples of intended use
+ * See also {@link Machines}, {@link toxiccleanup.builder.player.Harmable} for examples
+ * of intended use
  * in other interfaces.
  *
  * @provided
